@@ -4,6 +4,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import authRoutes from './routes/authRoutes.js'
 import waterRoutes from './routes/waterRoutes.js'
+import sleepRoutes from './routes/sleepRoutes.js'
 
 dotenv.config()
 
@@ -12,6 +13,7 @@ const app = express()
 app.use(cors())
 app.use(express.json())
 app.use('/api/water', waterRoutes)
+app.use('/api/sleep', sleepRoutes)
 
 mongoose.connect(process.env.MONGO_URI, {
   serverSelectionTimeoutMS: 5000,
