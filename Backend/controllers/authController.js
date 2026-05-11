@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
 import sendEmail from '../config/sendEmail.js'
+import cloudinary from '../config/cloudinary.js'
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' })
@@ -119,6 +120,50 @@ export const resetPassword = async (req, res) => {
     await user.save()
 
     res.json({ message: 'Password reset successful' })
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+// @route PUT /api/auth/profile
+export const updateProfile = async (req, res) => {
+  try {
+    const { name, age, weight, height, gender } = req.body
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { name, age, weight, height, gender },
+      { new: true }
+    ).select('-password')
+    res.json(user)
+  } catch (err) {
+    res.status(500).json({ message: err.message })
+  }
+}
+
+// @route POST /api/auth/profile/picture
+export const uploadProfilePicture = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: 'No file uploaded' })
+
+    // upload to cloudinary
+    const result = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        { folder: 'pulsefit/profiles', transformation: [{ width: 400, height: 400, crop: 'fill' }] },
+        (error, result) => {
+          if (error) reject(error)
+          else resolve(result)
+        }
+      ).end(req.file.buffer)
+    })
+
+    // save URL to user
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { profilePicture: result.secure_url },
+      { new: true }
+    ).select('-password')
+
+    res.json({ profilePicture: user.profilePicture })
   } catch (err) {
     res.status(500).json({ message: err.message })
   }
