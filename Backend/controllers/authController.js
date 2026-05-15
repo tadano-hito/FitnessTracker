@@ -4,10 +4,12 @@ import jwt from 'jsonwebtoken'
 import crypto from 'crypto'
 import sendEmail from '../config/sendEmail.js'
 import cloudinary from '../config/cloudinary.js'
+import { OAuth2Client } from "google-auth-library"
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, { expiresIn: '7d' })
 }
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
 // @route POST /api/auth/register
 export const register = async (req, res) => {
@@ -166,5 +168,46 @@ export const uploadProfilePicture = async (req, res) => {
     res.json({ profilePicture: user.profilePicture })
   } catch (err) {
     res.status(500).json({ message: err.message })
+  }
+}
+
+
+export const googleAuth = async (req, res) => {
+  try {
+    const { token } = req.body
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    })
+
+    const payload = ticket.getPayload()
+
+    const { email, name, picture, sub } = payload
+
+    let user = await User.findOne({ email })
+
+    // If user doesn't exist → create new
+    if (!user) {
+      user = await User.create({
+        name,
+        email,
+        password: null,
+        googleId: sub,
+        profilePicture: picture,
+      })
+    }
+
+    const jwtToken = generateToken(user._id)
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      token: jwtToken,
+    })
+  } catch (err) {
+    console.error(err)
+    res.status(500).json({ message: "Google authentication failed" })
   }
 }

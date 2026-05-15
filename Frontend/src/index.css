@@ -1,5 +1,11 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+select option {
+  background-color: #111;
+  color: #fff;
+}
 @keyframes marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-33.33%); }

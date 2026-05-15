@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '../context/AuthContext'
+import { GoogleLogin } from '@react-oauth/google'
+
 
 export default function Login() {
   const { login } = useAuth()
@@ -86,6 +88,32 @@ export default function Login() {
           >
             {loading ? 'Logging in...' : 'Login'}
           </button>
+          <div className="mt-6 flex flex-col items-center gap-4">
+  <div className="text-gray-600 text-sm">OR</div>
+
+  <div className="w-full flex justify-center">
+  <div className="w-full max-w-[320px] bg-white/5 border border-white/10 rounded-xl p-2 hover:border-green-400/30 hover:bg-white/10 transition duration-300 shadow-[0_0_20px_rgba(74,222,128,0.08)]">
+      <GoogleLogin
+        onSuccess={async (credentialResponse) => {
+          try {
+            const { data } = await axios.post(
+              'http://localhost:5003/api/auth/google',
+              {
+                token: credentialResponse.credential,
+              }
+            )
+
+            login(data, data.token)
+            navigate('/dashboard')
+          } catch (err) {
+            setError(err.response?.data?.message || 'Google login failed')
+          }
+        }}
+        onError={() => setError('Google login failed')}
+      />
+    </div>
+  </div>
+</div>
         </form>
         <div className="flex justify-end">
         <Link to="/forgot-password" className="text-sm text-gray-200 hover:text-green-400 transition">
