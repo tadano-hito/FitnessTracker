@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useAuth } from '../context/AuthContext'
+import { GoogleLogin } from '@react-oauth/google'
+import { FcGoogle } from 'react-icons/fc'
 
 export default function Register() {
   const { login } = useAuth()
@@ -13,6 +15,7 @@ export default function Register() {
     password: '',
     confirmPassword: ''
   })
+
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -48,6 +51,7 @@ export default function Register() {
         email: form.email,
         password: form.password
       })
+
       login(data, data.token)
       navigate('/dashboard')
     } catch (err) {
@@ -80,6 +84,8 @@ export default function Register() {
         )}
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+
+          {/* Name */}
           <div>
             <label className="text-sm uppercase tracking-widest text-gray-500 mb-2 block">Full Name</label>
             <input
@@ -89,10 +95,11 @@ export default function Register() {
               onChange={handleChange}
               placeholder="Abdullah Saleem"
               required
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white text-base placeholder-gray-600 focus:outline-none focus:border-green-400/50 focus:bg-white/10 transition"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-green-400/50 focus:bg-white/10 transition"
             />
           </div>
 
+          {/* Email */}
           <div>
             <label className="text-sm uppercase tracking-widest text-gray-500 mb-2 block">Email</label>
             <input
@@ -102,10 +109,11 @@ export default function Register() {
               onChange={handleChange}
               placeholder="you@example.com"
               required
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white text-base placeholder-gray-600 focus:outline-none focus:border-green-400/50 focus:bg-white/10 transition"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-green-400/50 focus:bg-white/10 transition"
             />
           </div>
 
+          {/* Password */}
           <div>
             <label className="text-sm uppercase tracking-widest text-gray-500 mb-2 block">Password</label>
             <input
@@ -115,10 +123,11 @@ export default function Register() {
               onChange={handleChange}
               placeholder="••••••••"
               required
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white text-base placeholder-gray-600 focus:outline-none focus:border-green-400/50 focus:bg-white/10 transition"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-green-400/50 focus:bg-white/10 transition"
             />
           </div>
 
+          {/* Confirm Password */}
           <div>
             <label className="text-sm uppercase tracking-widest text-gray-500 mb-2 block">Confirm Password</label>
             <input
@@ -128,10 +137,11 @@ export default function Register() {
               onChange={handleChange}
               placeholder="••••••••"
               required
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white text-base placeholder-gray-600 focus:outline-none focus:border-green-400/50 focus:bg-white/10 transition"
+              className="w-full bg-white/5 border border-white/10 rounded-xl px-5 py-4 text-white placeholder-gray-600 focus:outline-none focus:border-green-400/50 focus:bg-white/10 transition"
             />
           </div>
 
+          {/* Submit */}
           <button
             type="submit"
             disabled={loading}
@@ -139,6 +149,55 @@ export default function Register() {
           >
             {loading ? 'Creating account...' : 'Create Account'}
           </button>
+
+          {/* OR */}
+          <div className="text-center text-gray-600 text-sm uppercase tracking-widest mt-4">
+            OR
+          </div>
+
+          {/* Google Login (FIXED WORKING VERSION) */}
+          <div className="w-full mt-2 flex justify-center">
+            <GoogleLogin
+              onSuccess={async (credentialResponse) => {
+                try {
+                  const { data } = await axios.post(
+                    'http://localhost:5003/api/auth/google',
+                    {
+                      token: credentialResponse.credential,
+                    }
+                  )
+
+                  login(data, data.token)
+                  navigate('/dashboard')
+                } catch (err) {
+                  setError(err.response?.data?.message || 'Google authentication failed')
+                }
+              }}
+              onError={() => setError('Google authentication failed')}
+            />
+
+            {/* Custom styled overlay button (your UI preserved) */}
+            <div
+              className="
+                absolute w-[300px] h-[60px]
+                bg-white/10 hover:bg-white/20
+                border-2 border-white/30 hover:border-green-400
+        
+                rounded-xl
+                flex items-center justify-center gap-3
+                shadow-[0_0_25px_rgba(74,222,128,0.15)]
+                hover:shadow-[0_0_60px_rgba(74,222,128,0.35)]
+                transition-all duration-300 active:scale-[0.97]
+                backdrop-blur-md cursor-pointer
+              "
+              onClick={() =>
+                document.querySelector('div[role="button"]')?.click()
+              }
+            >
+              <FcGoogle className="w-7 h-7" />
+              <span>Continue with Google</span>
+            </div>
+          </div>
         </form>
 
         <p className="text-center text-gray-600 text-base mt-8">

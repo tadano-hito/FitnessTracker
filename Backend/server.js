@@ -8,6 +8,7 @@ import sleepRoutes from './routes/sleepRoutes.js'
 import bpRoutes from './routes/bpRoutes.js'
 import workoutRoutes from './routes/workoutRoute.js'
 import goalRoutes from './routes/goalRoutes.js'
+import nutritionRoutes from './routes/nutritionRoutes.js'
 import dns from 'dns'
 import net from 'net'
 dotenv.config()
@@ -22,6 +23,7 @@ app.use('/api/sleep', sleepRoutes)
 app.use('/api/bp', bpRoutes)
 app.use('/api/workouts', workoutRoutes)
 app.use('/api/goals', goalRoutes)
+app.use('/api/nutrition', nutritionRoutes)
 
 mongoose.connect(process.env.MONGO_URI, {
   serverSelectionTimeoutMS: 5000,

@@ -5,13 +5,15 @@ import Login from './pages/Login'
 import Register from './pages/Register'
 import ForgotPassword from './pages/ForgotPassword'
 import ResetPassword from './pages/ResetPassword'
-import Dashboard from './pages/Dasboard'
+import Dashboard from './pages/Dashboard'
 import WaterIntakePage from './pages/WaterIntakePage'
 import SleepPage from './pages/SleepPage'
 import BloodPressurePage from './pages/BloodPressurePage'
 import ProfilePage from './pages/ProfilePage'
 import WorkoutPage from './pages/WorkoutPage'
 import GoalPage from './pages/GoalPage'
+import NutritionPage from './pages/NutritionPage'
+
 
 function App() {
   return (
@@ -32,6 +34,7 @@ function App() {
         <Route path="/profile" element={<Layout><ProfilePage /></Layout>} />
         <Route path="/WorkoutPage" element={<Layout><WorkoutPage /></Layout>} />
         <Route path="/GoalPage" element={<Layout><GoalPage /></Layout>} />
+        <Route path="/nutrition" element={<Layout><NutritionPage /></Layout>} />
       </Routes>
     </BrowserRouter>
   )
