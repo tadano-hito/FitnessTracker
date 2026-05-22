@@ -6,6 +6,7 @@ import {
   getFoodsBycat,
   // meal plan
   getMealPlan,
+  getLifestyles,
   // CRUD
   logMeal,
   getTodaysMeals,
@@ -26,7 +27,8 @@ router.get("/foods/categories", getFoodCategories);
 router.get("/foods/category",   getFoodsBycat);     // ?cat=Breakfast
 
 // ── Meal plan ──────────────────────────────────
-router.get("/meal-plan",        getMealPlan);        // ?goal=lose&calories=1800
+router.get("/meal-plan",        getMealPlan);        // ?goal=lose&calories=1800&lifestyle=student
+router.get("/lifestyles",       getLifestyles);      // returns lifestyle options for UI
 
 // ── Meals CRUD ─────────────────────────────────
 router.post("/",                logMeal);

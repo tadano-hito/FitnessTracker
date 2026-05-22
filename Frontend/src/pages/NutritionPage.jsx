@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import axios from 'axios'
 import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
 import { useAuth } from '../context/AuthContext'
 import { useTheme } from '../context/ThemeContext'
+import Layout from '../component/Layout'
 import {
   Apple, Plus, Trash2, Search, X,
   Pencil, CalendarDays, Sparkles,
@@ -18,9 +19,17 @@ const MEAL_ICONS   = { breakfast: '🌅', lunch: '☀️', dinner: '🌙', snack
 const MACRO_COLORS = ['#22d3ee', '#f59e0b', '#f43f5e']
 const EMPTY_FOOD   = { name: '', calories: '', protein: '', carbs: '', fats: '' }
 const GOAL_OPTIONS = [
-  { value: 'lose',     label: 'Weight Loss', emoji: '⚡' },
-  { value: 'maintain', label: 'Maintenance',  emoji: '⚖️' },
-  { value: 'gain',     label: 'Muscle Gain',  emoji: '💪' },
+  { value: 'lose',     label: 'Weight Loss', emoji: '⚡', cal: -300 },
+  { value: 'maintain', label: 'Maintenance',  emoji: '⚖️', cal: 0   },
+  { value: 'gain',     label: 'Muscle Gain',  emoji: '💪', cal: +300 },
+]
+const LIFESTYLE_OPTIONS = [
+  { value: 'student',       label: 'Student',    emoji: '📚' },
+  { value: 'office_worker', label: 'Office Job', emoji: '💻' },
+  { value: 'gym_goer',      label: 'Gym Goer',   emoji: '🏋️' },
+  { value: 'manual_worker', label: 'Labour Work',emoji: '🔨' },
+  { value: 'homebody',      label: 'Home',        emoji: '🏠' },
+  { value: 'athlete',       label: 'Athlete',     emoji: '⚽' },
 ]
 
 // ════════════════════════════════════════════════════════════
@@ -71,7 +80,7 @@ function SmartFoodSearch({ token, onSelect, darkMode }) {
     return () => document.removeEventListener('mousedown', h)
   }, [])
 
-  const pickFood = (food) => {
+  const pickFood = food => {
     setSelectedFood(food)
     setSelectedServing(food.servings[0])
     setOpen(false)
@@ -178,17 +187,25 @@ function SmartFoodSearch({ token, onSelect, darkMode }) {
 //  MEAL PLAN CARD
 // ════════════════════════════════════════════════════════════
 function MealPlanCard({ token, calorieGoal, darkMode }) {
-  const [goal,    setGoal]    = useState('maintain')
-  const [plan,    setPlan]    = useState(null)
-  const [loading, setLoading] = useState(false)
+  const [goal,      setGoal]      = useState('maintain')
+  const [lifestyle, setLifestyle] = useState('student')
+  const [plan,      setPlan]      = useState(null)
+  const [loading,   setLoading]   = useState(false)
 
   const card = `${darkMode ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'} border rounded-2xl`
+  const pill = active => `py-2 rounded-xl text-xs font-bold border transition flex flex-col items-center gap-0.5
+    ${active
+      ? 'bg-green-400 border-green-400 text-black'
+      : darkMode ? 'border-white/10 text-gray-500 hover:text-white bg-white/5'
+                 : 'border-gray-200 text-gray-500 hover:text-gray-900 bg-gray-50'}`
 
   const generate = async () => {
     setLoading(true)
     try {
-      const { data } = await axios.get(`${API}/nutrition/meal-plan?goal=${goal}&calories=${calorieGoal}`,
-        { headers: { Authorization: `Bearer ${token}` } })
+      const { data } = await axios.get(
+        `${API}/nutrition/meal-plan?goal=${goal}&calories=${calorieGoal}&lifestyle=${lifestyle}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      )
       setPlan(data.data)
     } catch (e) { console.error(e) }
     finally { setLoading(false) }
@@ -196,18 +213,30 @@ function MealPlanCard({ token, calorieGoal, darkMode }) {
 
   return (
     <div className={`${card} p-6`}>
-      <h2 className="text-base font-black uppercase mb-2 flex items-center gap-2">
+      <h2 className="text-base font-black uppercase mb-1 flex items-center gap-2">
         <Sparkles size={16} className="text-green-400" /> AI Meal Plan
       </h2>
-      <p className="text-gray-500 text-xs mb-5">Full day Pakistani meal plan based on your goal</p>
+      <p className="text-gray-500 text-xs mb-4">Personalised Pakistani meal plan based on your goal and lifestyle</p>
 
+      {/* Goal */}
+      <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">Your Goal</p>
       <div className="grid grid-cols-3 gap-2 mb-4">
         {GOAL_OPTIONS.map(g => (
-          <button key={g.value} type="button" onClick={() => setGoal(g.value)}
-            className={`py-2.5 rounded-xl text-xs font-bold uppercase border transition flex flex-col items-center gap-1
-              ${goal === g.value ? 'bg-green-400 border-green-400 text-black' : darkMode ? 'border-white/10 text-gray-500 hover:text-white bg-white/5' : 'border-gray-200 text-gray-500 hover:text-gray-900 bg-gray-50'}`}>
+          <button key={g.value} type="button" onClick={() => setGoal(g.value)} className={pill(goal === g.value)}>
             <span className="text-base">{g.emoji}</span>
-            {g.label}
+            <span>{g.label}</span>
+          </button>
+        ))}
+      </div>
+
+
+      {/* Lifestyle */}
+      <p className="text-xs uppercase tracking-widest text-gray-500 mb-2">Your Lifestyle</p>
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        {LIFESTYLE_OPTIONS.map(l => (
+          <button key={l.value} type="button" onClick={() => setLifestyle(l.value)} className={pill(lifestyle === l.value)}>
+            <span className="text-base">{l.emoji}</span>
+            <span>{l.label}</span>
           </button>
         ))}
       </div>
@@ -219,6 +248,11 @@ function MealPlanCard({ token, calorieGoal, darkMode }) {
 
       {plan && (
         <div className="flex flex-col gap-3">
+          <div className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-xs
+            ${darkMode ? 'bg-white/5 border-white/10 text-gray-400' : 'bg-gray-50 border-gray-200 text-gray-500'}`}>
+            <span>{LIFESTYLE_OPTIONS.find(l => l.value === lifestyle)?.emoji}</span>
+            <span>{plan.lifestyleLabel} · {plan.effectiveCalories} kcal target</span>
+          </div>
           {Object.entries(plan.meals).map(([type, item]) => {
             if (!item) return null
             const srv = item.selectedServing
@@ -310,7 +344,6 @@ function WeeklyHistory({ token, calorieGoal, darkMode }) {
           ))}
         </div>
       </div>
-
       {loading ? (
         <div className="flex items-center justify-center h-32 text-gray-500 text-sm">Loading…</div>
       ) : data.length === 0 ? (
@@ -334,11 +367,10 @@ function WeeklyHistory({ token, calorieGoal, darkMode }) {
               </defs>
             </BarChart>
           </ResponsiveContainer>
-
           <div className="grid grid-cols-3 gap-3 mt-4">
             {[
               { label: 'Avg Calories', value: Math.round(data.reduce((s, d) => s + d.totalCalories, 0) / data.length), unit: 'kcal', color: '#facc15' },
-              { label: 'Avg Protein',  value: Math.round(data.reduce((s, d) => s + d.totalProtein, 0) / data.length),  unit: 'g',    color: '#22d3ee' },
+              { label: 'Avg Protein',  value: Math.round(data.reduce((s, d) => s + d.totalProtein,  0) / data.length), unit: 'g',    color: '#22d3ee' },
               { label: 'Days Logged',  value: data.filter(d => d.mealCount > 0).length, unit: `/${days}`,              color: '#4ade80' },
             ].map(({ label, value, unit, color }) => (
               <div key={label} className={`${darkMode ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200'} border rounded-xl p-3 text-center`}>
@@ -383,13 +415,12 @@ function EditMealModal({ meal, token, onClose, onSaved, darkMode }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
       <div className={`${darkMode ? 'bg-gray-900 border-white/10' : 'bg-white border-gray-200'} border rounded-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto`}>
         <div className="flex justify-between items-center mb-5">
           <h2 className="text-lg font-black uppercase">✏️ Edit Meal</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-red-400 transition"><X size={18} /></button>
         </div>
-
         <div className="mb-4">
           <label className="text-xs uppercase tracking-widest text-gray-500 mb-2 block">Meal Type</label>
           <div className="grid grid-cols-4 gap-2">
@@ -402,7 +433,6 @@ function EditMealModal({ meal, token, onClose, onSaved, darkMode }) {
             ))}
           </div>
         </div>
-
         {foodItems.map((fi, idx) => (
           <div key={idx} className={`${darkMode ? 'bg-white/5 border-white/10' : 'bg-gray-50 border-gray-200'} border rounded-xl p-4 mb-3 flex flex-col gap-3`}>
             <input value={fi.name} onChange={e => setField(idx, 'name', e.target.value)} placeholder="Food name" className={inp} />
@@ -416,14 +446,11 @@ function EditMealModal({ meal, token, onClose, onSaved, darkMode }) {
             </div>
           </div>
         ))}
-
         <div className="mb-4">
           <label className="text-xs uppercase tracking-widest text-gray-500 mb-2 block">Notes</label>
           <input value={notes} onChange={e => setNotes(e.target.value)} className={inp} />
         </div>
-
         {error && <div className="bg-red-500/10 border border-red-500/30 text-red-400 text-sm px-4 py-3 rounded-xl mb-4">{error}</div>}
-
         <div className="flex gap-3">
           <button onClick={onClose} className={`flex-1 border ${darkMode ? 'border-white/10 text-gray-400' : 'border-gray-200 text-gray-500'} font-bold py-3 rounded-xl transition text-sm`}>Cancel</button>
           <button onClick={handleSave} disabled={loading}
@@ -447,7 +474,7 @@ function BMICalculator({ profile, darkMode }) {
   const cat = !bmi ? null : bmi < 18.5 ? { label: 'Underweight', color: '#60a5fa' } : bmi < 25 ? { label: 'Normal', color: '#4ade80' } : bmi < 30 ? { label: 'Overweight', color: '#facc15' } : { label: 'Obese', color: '#f87171' }
   const pct = bmi ? Math.min(((bmi - 10) / 30) * 100, 100) : 0
 
-  const inp = `w-full ${darkMode ? 'bg-white/5 border-white/10 text-white placeholder-gray-600' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'} border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-400/50 transition`
+  const inp  = `w-full ${darkMode ? 'bg-white/5 border-white/10 text-white placeholder-gray-600' : 'bg-gray-50 border-gray-200 text-gray-900 placeholder-gray-400'} border rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-green-400/50 transition`
   const card = `${darkMode ? 'bg-white/5 border-white/10' : 'bg-white border-gray-200'} border rounded-2xl`
 
   return (
@@ -488,14 +515,13 @@ function BMICalculator({ profile, darkMode }) {
 }
 
 // ════════════════════════════════════════════════════════════
-//  MAIN PAGE — no sidebar, uses Layout
+//  MAIN PAGE — uses Layout (no duplicate sidebar)
 // ════════════════════════════════════════════════════════════
 export default function NutritionPage() {
-  const { token }      = useAuth()
-  const { darkMode }   = useTheme()
-  const navigate       = useNavigate()
+  const { token }    = useAuth()
+  const { darkMode } = useTheme()
+  const navigate     = useNavigate()
 
-  // fetch profile for BMI
   const [profile, setProfile] = useState(null)
   useEffect(() => {
     if (!token) return
@@ -531,12 +557,12 @@ export default function NutritionPage() {
     fetchToday()
   }, [token, fetchToday, navigate])
 
-  const setField   = (idx, key, val) => setFoodItems(fi => { const a = [...fi]; a[idx] = { ...a[idx], [key]: val }; return a })
-  const fillFromSearch = (item) => setFoodItems(fi => { const a = [...fi]; const i = a.findIndex(x => !x.name); const idx = i >= 0 ? i : a.length - 1; a[idx] = item; return a })
-  const addFood    = () => setFoodItems(fi => [...fi, { ...EMPTY_FOOD }])
-  const removeFood = idx => setFoodItems(fi => fi.filter((_, i) => i !== idx))
+  const setField       = (idx, key, val) => setFoodItems(fi => { const a = [...fi]; a[idx] = { ...a[idx], [key]: val }; return a })
+  const fillFromSearch = item => setFoodItems(fi => { const a = [...fi]; const i = a.findIndex(x => !x.name); const idx = i >= 0 ? i : a.length - 1; a[idx] = item; return a })
+  const addFood        = () => setFoodItems(fi => [...fi, { ...EMPTY_FOOD }])
+  const removeFood     = idx => setFoodItems(fi => fi.filter((_, i) => i !== idx))
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault()
     setError(''); setSuccess(false)
     if (!foodItems[0]?.name) { setError('Add at least one food item.'); return }
@@ -553,7 +579,7 @@ export default function NutritionPage() {
     finally { setLoading(false) }
   }
 
-  const deleteMeal = async (id) => {
+  const deleteMeal = async id => {
     try { await axios.delete(`${API}/nutrition/${id}`, { headers: { Authorization: `Bearer ${token}` } }); fetchToday() } catch { }
   }
 
@@ -581,7 +607,7 @@ export default function NutritionPage() {
   }
 
   return (
-    <div>
+    <>
       {/* Edit modal */}
       {editingMeal && (
         <EditMealModal meal={editingMeal} token={token} darkMode={darkMode}
@@ -765,6 +791,6 @@ export default function NutritionPage() {
 
       {/* Weekly history */}
       <WeeklyHistory token={token} calorieGoal={GOAL} darkMode={darkMode} />
-    </div>
+    </>
   )
 }

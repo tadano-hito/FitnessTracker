@@ -4,6 +4,7 @@ import {
   getFoodsByCategory,
   generateMealPlan,
   FOOD_CATEGORIES,
+  LIFESTYLES,
 } from "../data/pakistaniFoods.js";
 
 // ─────────────────────────────────────────────
@@ -73,9 +74,11 @@ export const getFoodsBycat = (req, res) => {
  * goal: 'lose' | 'gain' | 'maintain'
  */
 export const getMealPlan = (req, res) => {
-  const { goal = 'maintain', calories } = req.query;
+  const { goal = 'maintain', calories, lifestyle = 'student' } = req.query;
 
-  const validGoals = ['lose', 'gain', 'maintain'];
+  const validGoals      = ['lose', 'gain', 'maintain'];
+  const validLifestyles = ['student', 'office_worker', 'gym_goer', 'manual_worker', 'homebody', 'athlete'];
+
   if (!validGoals.includes(goal)) {
     return res.status(400).json({
       success: false,
@@ -83,9 +86,15 @@ export const getMealPlan = (req, res) => {
     });
   }
 
+  const safeLifestyle  = validLifestyles.includes(lifestyle) ? lifestyle : 'student';
   const targetCalories = parseInt(calories) || 2000;
-  const plan = generateMealPlan(targetCalories, goal);
+  const plan           = generateMealPlan(targetCalories, goal, safeLifestyle);
   return res.json({ success: true, data: plan });
+};
+
+// GET /api/nutrition/lifestyles — returns lifestyle options for frontend UI
+export const getLifestyles = (_req, res) => {
+  return res.json({ success: true, data: LIFESTYLES });
 };
 
 // ─────────────────────────────────────────────
@@ -200,7 +209,7 @@ export const getWeeklyHistory = async (req, res) => {
       const summary = buildSummary(meals);
       result.push({
         date: start.toISOString().split('T')[0],
-        label: start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
+        label: start.toLocaleDateString('en-PK', { weekday: 'short', month: 'short', day: 'numeric' }),
         ...summary,
         mealCount: meals.length,
       });

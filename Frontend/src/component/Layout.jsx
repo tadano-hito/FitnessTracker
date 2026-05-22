@@ -14,7 +14,7 @@ const navLinks = [
   { icon: HeartPulse, label: 'Blood Pressure', path: '/blood-pressure' },
   { icon: Dumbbell, label: 'Workouts', path: '/WorkoutPage' },
   { icon: Apple, label: 'Nutrition', path: '/nutrition' },
-  { icon: Target, label: 'Goals', path: '/goals' },
+  { icon: Target, label: 'Goals', path: '/GoalPage' },
   { icon: User, label: 'Profile', path: '/profile' },
 ]
 
